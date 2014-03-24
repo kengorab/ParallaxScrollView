@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.krg.ParallaxScrollView.ParallaxScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scroll_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/background"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/norway"/>
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#ffffff"
+        android:padding="24dp" >
+
+        <com.krg.ParallaxScrollView.ScrollHeaderView
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:background="#dddddd">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_weight=".75"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:textSize="24sp"
+                        android:textColor="#333333"
+                        android:text="This is a header"/>
+
+                    <Button
+                        android:id="@+id/norway_wiki"
+                        android:text="Norway Wiki"
+                        android:layout_width="0dp"
+                        android:layout_weight=".25"
+                        android:layout_gravity="center_vertical"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <View
+                    android:visibility="invisible"
+                    android:id="@+id/header_shadow"
+                    android:layout_width="match_parent"
+                    android:layout_height="4dp"
+                    android:background="@drawable/shadow_fade_down"/>
+
+            </LinearLayout>
+
+        </com.krg.ParallaxScrollView.ScrollHeaderView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:text="@string/norway"/>
+
+    </LinearLayout>
+
+
+</com.krg.ParallaxScrollView.ParallaxScrollView>
