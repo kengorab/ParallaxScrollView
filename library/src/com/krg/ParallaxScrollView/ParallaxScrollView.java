@@ -48,43 +48,51 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
      */
     private static final float  DEFAULT_SCROLL_FACTOR = 0.5f;
 
+    private Context                 mContext;
     private float                   mScrollFactor;
     private View                    mBackgroundView;
     private View                    mContentView;
     private int                     mShadowDrawableResId;
     private int                     mShadowHeight;
     private boolean                 mShowShadow;
-    private int                     mPlaceholderTop;
     private View                    mPlaceholderView;
+    private int                     mPlaceholderTop;
     private View                    mHeaderView;
+    private boolean                 mHasHeaderView;
     private boolean                 mIsHeaderStuck;
     private OnHeaderStuckListener   mOnHeaderStuckListener;
 
 
     public ParallaxScrollView(Context context) {
         super(context);
+        mContext = context;
         init();
     }
 
     public ParallaxScrollView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
         init();
     }
 
     public ParallaxScrollView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        mContext = context;
         init();
     }
 
     public interface OnHeaderStuckListener {
         public void onHeaderStuck(boolean isStuck);
     }
+
     public void init() {
         mScrollFactor = DEFAULT_SCROLL_FACTOR;
-        mShadowDrawableResId = R.drawable.shadow_fade_up;
+        mShadowDrawableResId = -1;
         mShadowHeight = 4;
         mShowShadow = true;
         mPlaceholderTop = Integer.MIN_VALUE;
+        mHeaderView = null;
+        mHasHeaderView = false;
         mIsHeaderStuck = false;
     }
 
@@ -160,6 +168,11 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
         mShadowHeight = shadowHeight;
     }
 
+    public void setHeaderView(View headerView) {
+        mHeaderView = headerView;
+        mHasHeaderView = true;
+    }
+
     /**
      * Obtains the first and second children of the ParallaxScrollView in XML, which become
      * the background and content views, respectively. This is only called when this view is
@@ -180,14 +193,20 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
         // Retrieve the content view from the layout.
         mContentView = getChildAt(1);
 
+        int headerViewCount = 0;
         if (mContentView instanceof ViewGroup) {
             int contentCount = ((ViewGroup) mContentView).getChildCount();
             for (int i = 0; i < contentCount; i++) {
                 if (((ViewGroup) mContentView).getChildAt(i) instanceof ScrollHeaderView) {
+                    headerViewCount++;
                     mHeaderView = ((ViewGroup) mContentView).getChildAt(i);
                 }
             }
         }
+
+        if (headerViewCount > 1) throw new IllegalStateException("ParallaxScrollView can only have 1 header view.");
+
+        mHasHeaderView = (mHeaderView != null);
     }
 
     /**
@@ -237,30 +256,24 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
         RelativeLayout.LayoutParams contentsLp = new RelativeLayout.LayoutParams(matchParent, wrapContent);
         contentsLp.addRule(RelativeLayout.BELOW, mBackgroundView.getId());
         mContentView.setLayoutParams(contentsLp);
-        mPlaceholderView = replaceViewInLayoutWithPlaceholder(mHeaderView, (ViewGroup)mContentView);
 
         // Create the shadow view, depending on member variables set by methods, and set it to be placed
         // above the main content. This provides the illusion that the main content is above the background.
-        View shadowView = new View(getContext());
+        View shadowView = new View(mContext);
         RelativeLayout.LayoutParams shadowLp = new RelativeLayout.LayoutParams(matchParent, mShadowHeight);
         shadowLp.addRule(RelativeLayout.ABOVE, mContentView.getId());
         shadowView.setLayoutParams(shadowLp);
-        if (mShowShadow) shadowView.setBackgroundResource(mShadowDrawableResId);
+        if (mShowShadow && mShadowDrawableResId != -1) shadowView.setBackgroundResource(mShadowDrawableResId);
 
         // Create a RelativeLayout and add the background, main content, and shadow views. This layout serves
         // as a container since a ScrollView can take only a single child View.
-        RelativeLayout newContainer = new RelativeLayout(getContext());
+        RelativeLayout newContainer = new RelativeLayout(mContext);
         newContainer.setLayoutParams(new RelativeLayout.LayoutParams(matchParent, wrapContent));
         newContainer.addView(mBackgroundView, 0);
         newContainer.addView(mContentView, 1);
         newContainer.addView(shadowView, 2);
 
-        FrameLayout frame = new FrameLayout(getContext());
-        frame.setLayoutParams(new RelativeLayout.LayoutParams(matchParent, matchParent));
-        frame.addView(newContainer);
-        frame.addView(mHeaderView);
-
-        // Create an ExtendedScrollView to contain the RelativeLayout from above.
+        // Create an ObservableScrollView to contain the RelativeLayout from above.
         final ObservableScrollView scrollView = new ObservableScrollView(getContext());
         scrollView.setCallbacks(this);
         scrollView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -271,12 +284,24 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
         });
         scrollView.setLayoutParams(new ViewGroup.LayoutParams(matchParent, matchParent));
         scrollView.setFillViewport(true);
-        scrollView.addView(frame);
+
+        // If the ParallaxScrollView has a header, find the placeholder and create an additional FrameLayout.
+        if (mHasHeaderView) {
+            mPlaceholderView = replaceViewInLayoutWithPlaceholder(mHeaderView, (ViewGroup)mContentView);
+
+            FrameLayout frame = new FrameLayout(getContext());
+            frame.setLayoutParams(new RelativeLayout.LayoutParams(matchParent, matchParent));
+            frame.addView(newContainer);
+            frame.addView(mHeaderView);
+            scrollView.addView(frame);
+
+        // If there is no header, simply add the RelativeLayout that was created above to the ObservableScrollView.
+        } else {
+            scrollView.addView(newContainer);
+        }
 
         // Add the ScrollView to the previously-empty ParallaxScrollView, and the layout is complete.
         addView(scrollView);
-
-
     }
 
     private View replaceViewInLayoutWithPlaceholder(final View viewToReplace, ViewGroup parent) {
@@ -317,25 +342,27 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
 
     @Override
     public void onScroll(int scrollX, int scrollY) {
-        // Calculate distance from top of header to top of screen (minus ActionBar and status bar).
-        int[] d = new int[2];
-        mPlaceholderView.getLocationOnScreen(d);
-        if (mPlaceholderTop == Integer.MIN_VALUE) mPlaceholderTop = d[1] - windowTopDisplacement();
+        if (mHasHeaderView) {
+            // Calculate distance from top of header to top of screen (minus ActionBar and status bar).
+            int[] d = new int[2];
+            mPlaceholderView.getLocationOnScreen(d);
+            if (mPlaceholderTop == Integer.MIN_VALUE) mPlaceholderTop = d[1] - windowTopDisplacement();
 
-        // The header is not stuck if scrollY < mPlaceholderTop. If it was before the scroll,
-        // invoke the callback, since the header is no longer stuck. Similarly for the other
-        // case.
-        if (scrollY < mPlaceholderTop) {
-            if (mIsHeaderStuck)
-                mOnHeaderStuckListener.onHeaderStuck(false);
-            mIsHeaderStuck = false;
-        } else if (scrollY >= mPlaceholderTop) {
-            if (!mIsHeaderStuck)
-                mOnHeaderStuckListener.onHeaderStuck(true);
-            mIsHeaderStuck = true;
+            // The header is not stuck if scrollY < mPlaceholderTop. If it was before the scroll,
+            // invoke the callback, since the header is no longer stuck. Similarly for the other
+            // case.
+            if (scrollY < mPlaceholderTop) {
+                if (mIsHeaderStuck)
+                    if (mOnHeaderStuckListener != null) mOnHeaderStuckListener.onHeaderStuck(false);
+                mIsHeaderStuck = false;
+            } else if (scrollY >= mPlaceholderTop) {
+                if (!mIsHeaderStuck)
+                    if (mOnHeaderStuckListener != null) mOnHeaderStuckListener.onHeaderStuck(true);
+                mIsHeaderStuck = true;
+            }
+
+            mHeaderView.setTranslationY(Math.max(mPlaceholderTop, scrollY));
         }
-
-        mHeaderView.setTranslationY(Math.max(mPlaceholderTop, scrollY));
 
         parallaxScrollBackgroundView(scrollY);
     }

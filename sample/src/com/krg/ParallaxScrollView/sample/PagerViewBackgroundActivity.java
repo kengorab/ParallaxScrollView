@@ -23,14 +23,18 @@ public class PagerViewBackgroundActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Create ParallaxScrollView, which will eventually be the container for everything.
         ParallaxScrollView parallaxScrollView = new ParallaxScrollView(this);
         parallaxScrollView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
+        // Create the Background View, a ViewPager.
         ViewPager backgroundViewPager = new ViewPager(this);
         backgroundViewPager.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 600));
         ImageAdapter adapter = new ImageAdapter(this);
         backgroundViewPager.setAdapter(adapter);
 
+        // Create the Contents View.
         LinearLayout contentView = new LinearLayout(this);
         contentView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         contentView.setBackgroundColor(0xffffffff);
@@ -43,9 +47,10 @@ public class PagerViewBackgroundActivity extends Activity {
         textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
         contentView.addView(textView);
 
+        // Make the ParallaxScrollView aware of the Background, Content, and Header Views, and set the content of
+        // this view to the ParallaxScrollView.
         parallaxScrollView.setBackgroundView(backgroundViewPager);
         parallaxScrollView.setContentView(contentView);
-
         setContentView(parallaxScrollView);
     }
 
