@@ -122,7 +122,7 @@ parentView.setOnHeaderStateChangedListener(new OnHeaderStateChangedListener() {
 <a name="ack"></a>
 # Acknowledgements & Contact Info
 * The photos and text in the sample app are from Wikipedia.  
-* The Header implementation was initially inspired by [Roman Nurik's Google+ post](https://plus.google.om/+RomanNurik/posts/1Sb549FvpJt), but has changed a lot along the way. I learned a lot from it and his other [ample code](https://code.google.com/p/romannurik-code/source/browse/) though, so you should check it out if ou're interested.
+* The Header implementation was initially inspired by [Roman Nurik's Google+ post](https://plus.google.om/+RomanNurik/posts/1Sb549FvpJt), but has changed a lot along the way. I learned a lot from it and his other [sample code](https://code.google.com/p/romannurik-code/source/browse/) though, so you should check it out if you're interested.
 * Any bugs/complaints/suggestions can be reported on GitHub, but you can also [email](mailto:ken.gorab@gmail.om?Subject=ParallaxScrollView%20feedback) me as well.
 * Thank you for checking out my project!
 
