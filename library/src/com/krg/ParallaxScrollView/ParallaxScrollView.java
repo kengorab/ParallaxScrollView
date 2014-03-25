@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Johan Olsson
+ * Copyright 2014 Ken Gorab
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,12 @@ import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
-
+/**
+ * A View that implements parallax scrolling (the illusion that one View is behind another and thus
+ * scrolls at a slower rate due to perspective). Provides methods by which the View can be created
+ * in XML or programmatically in Java. Also adds support for a Header View, a View which initially
+ * scrolls with the content, but becomes stuck at the top of the window upon reaching the top.
+ */
 public class ParallaxScrollView extends FrameLayout implements ObservableScrollView.Callbacks {
 
     /**
@@ -60,8 +65,7 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
     private View                    mHeaderView;
     private boolean                 mHasHeaderView;
     private boolean                 mIsHeaderStuck;
-    private OnHeaderStuckListener   mOnHeaderStuckListener;
-
+    private OnHeaderStateChangedListener mOnHeaderStateChangedListener;
 
     public ParallaxScrollView(Context context) {
         super(context);
@@ -81,10 +85,23 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
         init();
     }
 
-    public interface OnHeaderStuckListener {
-        public void onHeaderStuck(boolean isStuck);
+    /**
+     * A callback interface which allows implementing classes control during
+     * certain moments in the ParallaxScrollView's lifecycle.
+     */
+    public interface OnHeaderStateChangedListener {
+
+        /**
+         * Called when the state of the Header View changes (can be either stuck or unstuck).
+         * @param isStuck   true if the Header View is stuck at the top of the screen
+         *                  false if the Header View is scrolling and has not yet reached the top
+         */
+        public void onHeaderStateChanged(boolean isStuck);
     }
 
+    /**
+     * Initializes member variables.
+     */
     public void init() {
         mScrollFactor = DEFAULT_SCROLL_FACTOR;
         mShadowDrawableResId = -1;
@@ -96,8 +113,14 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
         mIsHeaderStuck = false;
     }
 
-    public void setOnHeaderStuckListener(OnHeaderStuckListener listener) {
-        mOnHeaderStuckListener = listener;
+    /**
+     * Sets the callback for when the state of the Header View changes.
+     * @param listener  An OnHeaderStateChangedListener interface containing the implementation
+     *                  of <code>onHeaderStateChanged(boolean isStuck)</code>, which is called
+     *                  when the state of the Header View changes from stuck to unstuck or vice-versa.
+     */
+    public void setOnHeaderStateChangedListener(OnHeaderStateChangedListener listener) {
+        mOnHeaderStateChangedListener = listener;
     }
 
     /**
@@ -109,6 +132,14 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
         mBackgroundView = backgroundView;
         if (mBackgroundView.getId() == NO_ID)
             mBackgroundView.setId(BACKGROUND_VIEW_ID);
+    }
+
+    /**
+     * Returns the background View (the View that scrolls in parallax to the content).
+     * @return  The background View.
+     */
+    public View getBackgroundView() {
+        return mBackgroundView;
     }
 
     /**
@@ -126,6 +157,34 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
         mContentView = contentView;
         if (mContentView.getId() == NO_ID)
             mContentView.setId(CONTENT_VIEW_ID);
+    }
+
+    /**
+     * Returns the content View (the View that scrolls normally).
+     * @return  The content View.
+     */
+    public View getContentView() {
+        return mContentView;
+    }
+
+    /**
+     * Sets the View that will be the Header View. This View will scroll with the content until it
+     * reaches the top of the available screen (taking into account the ActionBar and status bar), at
+     * which point it will become stuck. Scrolling down past its original position on the page will
+     * cause it to become unstuck and once again scroll with the content.
+     * @param headerView    The View (or ViewGroup) that will hold the Header content.
+     */
+    public void setHeaderView(View headerView) {
+        mHeaderView = headerView;
+        mHasHeaderView = true;
+    }
+
+    /**
+     * Returns the header View (the View that can stick to the top of the window).
+     * @return  The header View.
+     */
+    public View getHeaderView() {
+        return mHeaderView;
     }
 
     /**
@@ -166,11 +225,6 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
      */
     public void setShadowHeight(int shadowHeight) {
         mShadowHeight = shadowHeight;
-    }
-
-    public void setHeaderView(View headerView) {
-        mHeaderView = headerView;
-        mHasHeaderView = true;
     }
 
     /**
@@ -240,7 +294,7 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
      * the ParallaxScrollView should have only two subviews. Upon completion of this method, what remains in
      * the View hierarchy is the following:
      *      ParallaxScrollView
-     *          | ExtendedScrollView
+     *          | ObservableScrollView
      *              | RelativeLayout
      *                  | Background View
      *                  | Main content View
@@ -248,6 +302,16 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
      * The nature of this hierarchy is necessitated by a ScrollView's only holding a single child. This is abstracted
      * away from the programmer utilizing this View by requiring him/her to supply the parent ParallaxScrollView with
      * two children: one for the background and another for the main content.
+     *
+     * If there is an instance of ScrollHeaderView somewhere within the content, the hierarchy is slightly altered:
+     *      ParallaxScrollView
+     *          | ObservableScrollView
+     *              | FrameLayout
+     *                  | RelativeLayout
+     *                      | Background View
+     *                      | Main content View
+     *                      | Shadow View (if visible)
+     *                  | ScrollHeaderView
      */
     private void createParallaxScrollView() {
         int matchParent = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -304,6 +368,12 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
         addView(scrollView);
     }
 
+    /**
+     * Removes a View from its parent and replaces it with a fully transparent View of the same dimensions.
+     * @param viewToReplace The View to be removed.
+     * @param parent        The parent of the View to be removed.
+     * @return  The inserted placeholder View with the same dimensions as the removed View.
+     */
     private View replaceViewInLayoutWithPlaceholder(final View viewToReplace, ViewGroup parent) {
         int index = parent.indexOfChild(viewToReplace);
         if (index != -1) {
@@ -353,11 +423,11 @@ public class ParallaxScrollView extends FrameLayout implements ObservableScrollV
             // case.
             if (scrollY < mPlaceholderTop) {
                 if (mIsHeaderStuck)
-                    if (mOnHeaderStuckListener != null) mOnHeaderStuckListener.onHeaderStuck(false);
+                    if (mOnHeaderStateChangedListener != null) mOnHeaderStateChangedListener.onHeaderStateChanged(false);
                 mIsHeaderStuck = false;
             } else if (scrollY >= mPlaceholderTop) {
                 if (!mIsHeaderStuck)
-                    if (mOnHeaderStuckListener != null) mOnHeaderStuckListener.onHeaderStuck(true);
+                    if (mOnHeaderStateChangedListener != null) mOnHeaderStateChangedListener.onHeaderStateChanged(true);
                 mIsHeaderStuck = true;
             }
 
