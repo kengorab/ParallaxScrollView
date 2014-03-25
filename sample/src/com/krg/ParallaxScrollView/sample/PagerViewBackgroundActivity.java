@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014 Ken Gorab
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.krg.ParallaxScrollView.sample;
 
 import android.app.Activity;
@@ -14,9 +30,9 @@ import android.widget.TextView;
 import com.krg.ParallaxScrollView.ParallaxScrollView;
 
 /**
- * User: Ken Gorab
- * Date: 2/22/14
- * Time: 8:54 PM
+ * An example of the implementation of a ParallaxScrollView, as created in Java and having a more
+ * interesting background View than a simple image (in this case a ViewPager was used, but it could
+ * have been anything).
  */
 public class PagerViewBackgroundActivity extends Activity {
 
@@ -54,6 +70,9 @@ public class PagerViewBackgroundActivity extends Activity {
         setContentView(parallaxScrollView);
     }
 
+    /**
+     * PagerAdapter which supplies images of Starry Night to the ViewPager.
+     */
     public class ImageAdapter extends PagerAdapter {
         private Context mContext;
         private int[] galleryImages = new int[] { R.drawable.starry1, R.drawable.starry2, R.drawable.starry3, R.drawable.starry4 };

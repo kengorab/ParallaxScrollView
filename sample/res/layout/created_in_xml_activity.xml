@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="300dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/norway"/>
+        android:src="@drawable/norway1"/>
 
     <LinearLayout
         android:id="@+id/content"
@@ -39,7 +39,7 @@
 
                     <TextView
                         android:layout_width="0dp"
-                        android:layout_weight=".75"
+                        android:layout_weight=".70"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
                         android:textSize="@dimen/header_text_size"
@@ -48,9 +48,9 @@
 
                     <Button
                         android:id="@+id/norway_wiki"
-                        android:text="Norway Wiki"
+                        android:text="Norway"
                         android:layout_width="0dp"
-                        android:layout_weight=".25"
+                        android:layout_weight=".30"
                         android:layout_gravity="center_vertical"
                         android:layout_height="wrap_content"/>
                 </LinearLayout>
@@ -69,7 +69,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="@dimen/content_text_size"
             android:text="@string/norway"/>
 
     </LinearLayout>

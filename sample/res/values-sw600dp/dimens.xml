@@ -2,4 +2,7 @@
 <resources>
     <dimen name="content_padding">24dp</dimen>
     <dimen name="content_text_size">16sp</dimen>
+
+    <dimen name="header_padding">8dp</dimen>
+    <dimen name="header_text_size">24sp</dimen>
 </resources>

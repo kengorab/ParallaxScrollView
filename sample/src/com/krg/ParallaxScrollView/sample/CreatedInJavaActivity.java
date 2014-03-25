@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014 Ken Gorab
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.krg.ParallaxScrollView.sample;
 
 import android.app.Activity;
@@ -14,23 +30,27 @@ import com.krg.ParallaxScrollView.ParallaxScrollView;
 import com.krg.ParallaxScrollView.ScrollHeaderView;
 
 /**
- * User: Ken Gorab
- * Date: 2/22/14
- * Time: 7:42 PM
+ * An example of the implementation of a ParallaxScrollView, as created in Java, for
+ * those who prefer to create their layouts programmatically. The layout itself is a
+ * duplicate of the one created in XML, but this demonstrates the process by which a
+ * ParallaxScrollView can be dynamically created.
  */
-public class CreatedInJavaActivity extends Activity {
+public class CreatedInJavaActivity extends Activity implements View.OnClickListener {
+
+    int imageResId = R.drawable.norway1;
+    ParallaxScrollView parallaxScrollView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Create ParallaxScrollView, which will eventually be the container for everything.
-        ParallaxScrollView parallaxScrollView = new ParallaxScrollView(this);
+        parallaxScrollView = new ParallaxScrollView(this);
         parallaxScrollView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         // Create the Background View.
         ImageView backgroundView = new ImageView(this);
-        backgroundView.setImageResource(R.drawable.norway);
+        backgroundView.setImageResource(R.drawable.norway1);
         backgroundView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 600));
         backgroundView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
@@ -57,7 +77,7 @@ public class CreatedInJavaActivity extends Activity {
         // Create the Header title within the Header View.
         TextView headerTitle = new TextView(this);
         LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT);
-        titleLp.weight = 0.75f;
+        titleLp.weight = 0.60f;
         titleLp.gravity = Gravity.CENTER_VERTICAL;
         headerTitle.setLayoutParams(titleLp);
         float headerTextSize = getResources().getDimension(R.dimen.header_text_size);
@@ -69,14 +89,15 @@ public class CreatedInJavaActivity extends Activity {
         Button button = new Button(this);
         button.setId(R.id.norway_wiki);
         LinearLayout.LayoutParams wikiLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT);
-        wikiLp.weight = 0.25f;
+        wikiLp.weight = 0.40f;
         wikiLp.gravity = Gravity.CENTER_VERTICAL;
         button.setLayoutParams(wikiLp);
-        button.setText("Norway Wiki");
+        button.setText("Switch image");
+        button.setOnClickListener(this);
         container2.addView(headerTitle);
         container2.addView(button);
 
-        // Create the shadow View within the Header View. Using the {@link ParallaxScrollView#OnHeaderStuckListener}
+        // Create the shadow View within the Header View. Using the {@link ParallaxScrollView#OnHeaderStateChangedListener}
         // callback, this shadow can be toggled on and off when the Header View becomes stuck at the top of the screen.
         final View shadow = new View(this);
         shadow.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 8));
@@ -103,12 +124,24 @@ public class CreatedInJavaActivity extends Activity {
         parallaxScrollView.setBackgroundView(backgroundView);
         parallaxScrollView.setContentView(contentView);
         parallaxScrollView.setHeaderView(headerView);
-        parallaxScrollView.setOnHeaderStuckListener(new ParallaxScrollView.OnHeaderStuckListener() {
+        parallaxScrollView.setOnHeaderStateChangedListener(new ParallaxScrollView.OnHeaderStateChangedListener() {
             @Override
-            public void onHeaderStuck(boolean isStuck) {
+            public void onHeaderStateChanged(boolean isStuck) {
                 shadow.setVisibility(isStuck ? View.VISIBLE : View.INVISIBLE);
             }
         });
         setContentView(parallaxScrollView);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (imageResId == R.drawable.norway1)
+            imageResId = R.drawable.norway2;
+        else
+            imageResId = R.drawable.norway1;
+
+        // Demonstrate how the backgroundView can be accessed from the ParallaxScrollView.
+        ImageView parallaxView = (ImageView) parallaxScrollView.getBackgroundView();
+        parallaxView.setImageResource(imageResId);
     }
 }

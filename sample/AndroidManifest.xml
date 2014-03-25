@@ -10,6 +10,7 @@
         android:label="@string/app_name"
         android:icon="@drawable/ic_launcher"
         android:theme="@android:style/Theme.Holo.Light">
+
         <activity
             android:name="MainActivity"
             android:label="@string/app_name">
@@ -19,9 +20,35 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".CreatedInXmlActivity" />
-        <activity android:name=".CreatedInJavaActivity"/>
-        <activity android:name=".PagerViewBackgroundActivity"/>
+        <activity
+            android:name=".CreatedInXmlActivity"
+            android:label="Created in XML"
+            android:parentActivityName="MainActivity">
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".CreatedInJavaActivity"
+            android:label="Created in Java"
+            android:parentActivityName="MainActivity" >
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".PagerViewBackgroundActivity"
+            android:label="More interesting background"
+            android:parentActivityName="MainActivity" >
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="MainActivity" />
+        </activity>
 
     </application>
 </manifest>
